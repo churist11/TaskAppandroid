@@ -23,6 +23,7 @@
                 android:layout_width="300dp"
                 android:layout_alignParentLeft="true"
                 android:layout_height="match_parent"
+                android:maxLines="1"
                 android:hint="カテゴリーで検索..."/>
 
             <Button

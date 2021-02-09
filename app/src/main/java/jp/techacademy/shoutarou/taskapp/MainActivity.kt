@@ -1,11 +1,14 @@
 package jp.techacademy.shoutarou.taskapp
 
+import android.app.Activity
 import android.app.AlarmManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.inputmethodservice.Keyboard
 import android.os.Bundle
 import android.support.design.widget.Snackbar
+import android.support.v4.app.Fragment
 import android.support.v7.app.AlertDialog
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
@@ -15,12 +18,17 @@ import io.realm.RealmChangeListener
 import io.realm.Sort
 import kotlinx.android.synthetic.main.activity_main.*
 import android.text.TextWatcher
+import android.view.View
+import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import io.realm.RealmResults
 
 
 const val EXTRA_TASK = "jp.techacademy.shoutarou.taskapp.TASK"
 
 class MainActivity : AppCompatActivity() {
+
+//    val inputManager = this.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
 
     private lateinit var mRealm: Realm
     private val mRealmListener = object : RealmChangeListener<Realm> {
@@ -32,15 +40,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mTaskAdapter: TaskAdapter
 
 
-    override fun onStart() {
-        super.onStart()
 
-        search_edit_text.clearFocus()
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        this.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN)
 
         fab.setOnClickListener { view ->
             val intent = Intent(this@MainActivity, InputActivity::class.java)
@@ -53,7 +59,9 @@ class MainActivity : AppCompatActivity() {
             Log.d("DEBUG","Clear button clicked!!")
 
             search_edit_text.text.clear()
-            search_edit_text.clearFocus()
+
+            // ボタンクリックのタイミングでキーボードを閉じる
+            this.dismissKeyboard()
         }
 
         search_edit_text.addTextChangedListener(object : TextWatcher {
@@ -159,7 +167,6 @@ class MainActivity : AppCompatActivity() {
         if (withSearchTerm != null) {
 
             // Realmデータベースから、「withSearchTermを含むcategory全てのデータを取得して新しい日時順に並べた結果」を取得
-//            taskRealmResults = mRealm.where(Task::class.java).findAll().sort("date", Sort.DESCENDING)
             taskRealmResults = mRealm.where(Task::class.java).contains("category", withSearchTerm!!).findAll().sort("date", Sort.DESCENDING)
 
         } else {
@@ -179,6 +186,12 @@ class MainActivity : AppCompatActivity() {
         // 表示を更新するために、アダプターにデータが変更されたことを知らせる
         mTaskAdapter.notifyDataSetChanged()
 
+    }
+
+    fun Context.dismissKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        val windowToken = (this as? Activity)?.currentFocus?.windowToken
+        windowToken?.let { imm.hideSoftInputFromWindow(it, 0) }
     }
 
 }//end
